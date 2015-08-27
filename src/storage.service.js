@@ -114,10 +114,12 @@ function _sqlStorageService(sqlStorageMigrationServiceProvider) {
      */
     function deleteDatas() {
       var _this = this;
+      var tablesName = Object.keys(this.tables).map(function(tableKey) {
+        return _this.tables[tableKey].table_name;
+      });
 
       // Databases
-      var queries = Object.keys(this.tables).map(function(tableKey) {
-        var tableName = _this.tables[tableKey].table_name;
+      var queries = tablesName.map(function(tableName) {
         var request = 'DROP TABLE IF EXISTS ' + tableName;
 
         return _this.execute(request);
