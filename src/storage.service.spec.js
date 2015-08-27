@@ -58,24 +58,27 @@
       },
     };
 
-    // load the controller's module
-    beforeEach(module('sf.sqlStorage', function(sqlStorageServiceProvider) {
-      sqlStorageServiceProvider.setDatabaseConfig({
-        version: databaseVersion,
-        name: 'test.db',
+    function initContext(setSchema) {
+      // load the controller's module
+      module('sf.sqlStorage', function(sqlStorageServiceProvider) {
+        sqlStorageServiceProvider.setDatabaseConfig({
+          version: databaseVersion,
+          name: 'test.db',
+        });
+        sqlStorageServiceProvider.setDatabaseInstance(function() {
+          return sqlInstance.openDatabase();
+        });
+        if(setSchema) {
+          sqlStorageServiceProvider.setDatabaseSchema(databaseSchema);
+        }
       });
-      sqlStorageServiceProvider.setDatabaseInstance(function() {
-        return sqlInstance.openDatabase();
+
+      // Initialize the controller and a mock scope
+      inject(function(_sqlStorageService_) {
+        sqlStorageService = _sqlStorageService_;
+        executeStub = sinon.stub(sqlStorageService, 'execute');
       });
-      sqlStorageServiceProvider.setDatabaseSchema(databaseSchema);
-    }));
-
-    // Initialize the controller and a mock scope
-    beforeEach(inject(function(_sqlStorageService_) {
-      sqlStorageService = _sqlStorageService_;
-      executeStub = sinon.stub(sqlStorageService, 'execute');
-    }));
-
+    }
 
     //---------------
     //
@@ -83,6 +86,8 @@
     //
     //---------------
     describe('Get datas', function() {
+      beforeEach(function() { initContext(true); });
+
       it('should get database with cordova', inject(function() {
         var openStub = sinon.stub(sqlInstance, 'openDatabase').returns('ok');
         var database;
@@ -105,9 +110,21 @@
     //   Create
     //
     //---------------
+    describe('Init', function() {
+      beforeEach(function() { initContext(false); });
+
+      it('should init whith empty schema', inject(function() {
+        sqlStorageService.initTables();
+
+        expect(executeStub.callCount).equal(0);
+      }));
+    });
+
     describe('Create', function() {
       var localSetStub;
       var localGetStub;
+
+      beforeEach(function() { initContext(true); });
 
       beforeEach(inject(function(localStorageService) {
         localSetStub = sinon.stub(localStorageService, 'set');
@@ -183,6 +200,8 @@
     //
     //---------------
     describe('Clear', function() {
+      beforeEach(function() { initContext(true); });
+
       it('should drop tables', inject(function($q, localStorageService, $timeout) {
         var data;
         var clearStorageStub = sinon.stub(localStorageService, 'clearAll');
@@ -218,6 +237,8 @@
     describe('Execute', function() {
       var data;
       var executeSqlStub;
+
+      beforeEach(function() { initContext(true); });
 
       beforeEach(inject(function() {
         executeStub.restore();
