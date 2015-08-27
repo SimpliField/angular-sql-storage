@@ -2,7 +2,7 @@
   'use strict';
 
   describe('[Storage] Services', function() {
-    var storageService;
+    var sqlStorageService;
     var executeStub;
     var databaseVersion = 1.1;
     var executeSql = { executeSql: function(query, binding, success, error) {} };
@@ -59,19 +59,21 @@
     };
 
     // load the controller's module
-    beforeEach(module('sfMobile.storage', function(storageServiceProvider) {
-      storageServiceProvider.setDatabaseConfig({
+    beforeEach(module('sf.sqlStorage', function(sqlStorageServiceProvider) {
+      sqlStorageServiceProvider.setDatabaseConfig({
         version: databaseVersion,
         name: 'test.db',
       });
-      storageServiceProvider.setDatabaseInstance(function() { return sqlInstance.openDatabase(); });
-      storageServiceProvider.setDatabaseSchema(databaseSchema);
+      sqlStorageServiceProvider.setDatabaseInstance(function() {
+        return sqlInstance.openDatabase();
+      });
+      sqlStorageServiceProvider.setDatabaseSchema(databaseSchema);
     }));
 
     // Initialize the controller and a mock scope
-    beforeEach(inject(function(_storageService_) {
-      storageService = _storageService_;
-      executeStub = sinon.stub(storageService, 'execute');
+    beforeEach(inject(function(_sqlStorageService_) {
+      sqlStorageService = _sqlStorageService_;
+      executeStub = sinon.stub(sqlStorageService, 'execute');
     }));
 
 
@@ -85,12 +87,12 @@
         var openStub = sinon.stub(sqlInstance, 'openDatabase').returns('ok');
         var database;
 
-        database = storageService.getDatabase();
+        database = sqlStorageService.getDatabase();
 
         expect(openStub.callCount).equal(1);
         expect(database).equal('ok');
 
-        database = storageService.getDatabase();
+        database = sqlStorageService.getDatabase();
         expect(openStub.callCount).equal(1);
 
         openStub.restore();
@@ -110,23 +112,23 @@
         localStub = sinon.stub(localStorageService, 'set');
       }));
 
-      it('should create tables with migration', inject(function($q, $timeout, migrationService) {
+      it('should create tables with migration', inject(function($q, $timeout, sqlStorageMigrationService) {
         var data;
-        var updateStub = sinon.stub(migrationService, 'updateManager').returns($q.when('ok'));
+        var updateStub = sinon.stub(sqlStorageMigrationService, 'updateManager').returns($q.when('ok'));
 
         executeStub.returns($q.when('ok'));
 
-        expect(storageService.createPromise).equal(null);
+        expect(sqlStorageService.createPromise).equal(null);
 
-        storageService.initTables().then(function(_data_) {
+        sqlStorageService.initTables().then(function(_data_) {
           data = _data_;
         });
 
-        expect(storageService.createPromise).not.equal(null);
+        expect(sqlStorageService.createPromise).not.equal(null);
         expect(executeStub.callCount).equal(5);
 
-        Object.keys(storageService.tables).forEach(function(table, index) {
-          var tableName = storageService.tables[table].table_name;
+        Object.keys(sqlStorageService.tables).forEach(function(table, index) {
+          var tableName = sqlStorageService.tables[table].table_name;
           var queryRequest = 'CREATE TABLE IF NOT EXISTS';
           var queryFielsRequest = 'id NVARCHAR(32) UNIQUE PRIMARY KEY, payload TEXT';
 
@@ -139,7 +141,7 @@
         });
 
         // Called only once.
-        storageService.initTables();
+        sqlStorageService.initTables();
         expect(executeStub.callCount).equal(5);
 
         $timeout.flush();
@@ -152,13 +154,13 @@
       }));
 
       it('should create tables without migration', inject(
-      function($q, $timeout, migrationService, localStorageService) {
+      function($q, $timeout, sqlStorageMigrationService, localStorageService) {
         var data = null;
 
         sinon.stub(localStorageService, 'get').returns(1.1);
         executeStub.returns($q.when('ok'));
 
-        storageService.initTables().then(function(_data_) {
+        sqlStorageService.initTables().then(function(_data_) {
           data = _data_;
         });
 
@@ -182,15 +184,15 @@
 
         executeStub.returns($q.when('ok'));
 
-        storageService.deleteDatas().then(function(_data_) {
+        sqlStorageService.deleteDatas().then(function(_data_) {
           data = _data_;
         });
 
         expect(clearStorageStub.callCount).equal(1);
         expect(executeStub.callCount).equal(5);
 
-        Object.keys(storageService.tables).forEach(function(table, index) {
-          var tableName = storageService.tables[table].table_name;
+        Object.keys(sqlStorageService.tables).forEach(function(table, index) {
+          var tableName = sqlStorageService.tables[table].table_name;
 
           expect(executeStub.args[index][0]).contain('DROP TABLE IF EXISTS');
           expect(executeStub.args[index][0]).contain(tableName);
@@ -223,7 +225,7 @@
       it('should execute request', inject(function($timeout) {
         executeSqlStub.yields('test', 'testResult');
 
-        storageService.execute('test', []).then(function(_data_) {
+        sqlStorageService.execute('test', []).then(function(_data_) {
           data = _data_;
         });
 
@@ -233,7 +235,7 @@
       }));
 
       it('should failed to execute request', inject(function($timeout) {
-        storageService.execute('test', []).catch(function(_data_) {
+        sqlStorageService.execute('test', []).catch(function(_data_) {
           data = _data_;
         });
 

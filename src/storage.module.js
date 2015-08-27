@@ -1,4 +1,4 @@
 angular
-  .module('sfMobile.storage', [
+  .module('sf.sqlStorage', [
     'LocalStorageModule',
   ]);

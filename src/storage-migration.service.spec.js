@@ -3,33 +3,33 @@
 
   describe('[Migration] Services', function() {
     var database = 'test';
-    var migrationService;
+    var sqlStorageMigrationService;
 
     // load the controller's module
-    beforeEach(module('sfMobile.storage',
-    function($exceptionHandlerProvider, storageServiceProvider) {
+    beforeEach(module('sf.sqlStorage',
+    function($exceptionHandlerProvider, sqlStorageServiceProvider) {
       $exceptionHandlerProvider.mode('log');
-      storageServiceProvider.addUpdater({
+      sqlStorageServiceProvider.addUpdater({
         version: 1.0,
         method: function() {},
       });
-      storageServiceProvider.addUpdater({
+      sqlStorageServiceProvider.addUpdater({
         version: 1.1,
         method: function() {},
       });
     }));
 
     // Initialize the controller and a mock scope
-    beforeEach(inject(function(_migrationService_) {
-      migrationService = _migrationService_;
+    beforeEach(inject(function(_sqlStorageMigrationService_) {
+      sqlStorageMigrationService = _sqlStorageMigrationService_;
     }));
 
     describe('Instantiate', function() {
       it('should update available updaters', inject(function() {
-        var version10 = sinon.stub(migrationService._updateMethods, '1');
-        var version11 = sinon.stub(migrationService._updateMethods, '1.1');
+        var version10 = sinon.stub(sqlStorageMigrationService._updateMethods, '1');
+        var version11 = sinon.stub(sqlStorageMigrationService._updateMethods, '1.1');
 
-        migrationService.updateManager(database, 1.0);
+        sqlStorageMigrationService.updateManager(database, 1.0);
 
         expect(version10.callCount).equal(0);
         expect(version11.callCount).equal(1);

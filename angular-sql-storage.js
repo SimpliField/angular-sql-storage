@@ -2,26 +2,26 @@
 "use strict";
 
 angular
-  .module('sfMobile.storage', [
+  .module('sf.sqlStorage', [
     'LocalStorageModule',
   ]);
 
 angular
-  .module('sfMobile.storage')
-  .provider('migrationService', _migrationService);
+  .module('sf.sqlStorage')
+  .provider('sqlStorageMigrationService', _sqlStorageMigrationService);
 
-function _migrationService() {
+function _sqlStorageMigrationService() {
   var updateMethods = {};
 
   this.addUpdater = addUpdater;
-  this.$get = migrationService;
+  this.$get = sqlStorageMigrationService;
 
   function addUpdater(configMethod) {
     updateMethods[configMethod.version] = configMethod.method;
   }
 
   // @ngInject
-  function migrationService($q, $injector) {
+  function sqlStorageMigrationService($q, $injector) {
     var methods = {};
 
     methods._database = null;
@@ -50,21 +50,21 @@ function _migrationService() {
 
     return methods;
   }
-  migrationService.$inject = ["$q", "$injector"];
+  sqlStorageMigrationService.$inject = ["$q", "$injector"];
 }
 
 angular
-  .module('sfMobile.storage')
-  .provider('storageService', _storageService);
+  .module('sf.sqlStorage')
+  .provider('sqlStorageService', _sqlStorageService);
 
 // @ngInject
-function _storageService(migrationServiceProvider) {
+function _sqlStorageService(sqlStorageMigrationServiceProvider) {
   var _databaseName = 'database.db';
   var _databaseVersion = 1;
   var _databaseSchema = null;
   var _databaseInstance = null;
 
-  this.$get = storageService;
+  this.$get = sqlStorageService;
 
   this.setDatabaseConfig = setDatabaseConfig;
   this.setDatabaseSchema = setDatabaseSchema;
@@ -82,12 +82,12 @@ function _storageService(migrationServiceProvider) {
     _databaseInstance = databaseInstance;
   }
   function addUpdater(configMethod) {
-    migrationServiceProvider.addUpdater(configMethod);
+    sqlStorageMigrationServiceProvider.addUpdater(configMethod);
   }
 
   // @ngInject
-  function storageService($q, $window, $log, $injector,
-  localStorageService, migrationService) {
+  function sqlStorageService($q, $window, $log, $injector,
+  localStorageService, sqlStorageMigrationService) {
     var methods = {};
     var sqlInstance = null;
 
@@ -152,7 +152,7 @@ function _storageService(migrationServiceProvider) {
         $log.debug('[Storage] Create DB SUCCESS');
 
         return (currentVersion && currentVersion < _databaseVersion) ?
-          migrationService.updateManager(database, currentVersion)
+          sqlStorageMigrationService.updateManager(database, currentVersion)
             .then(function() {
               localStorageService.set('database_version', _databaseVersion);
               return database;
@@ -251,7 +251,7 @@ function _storageService(migrationServiceProvider) {
 
     return methods;
   }
-  storageService.$inject = ["$q", "$window", "$log", "$injector", "localStorageService", "migrationService"];
+  sqlStorageService.$inject = ["$q", "$window", "$log", "$injector", "localStorageService", "sqlStorageMigrationService"];
 }
-_storageService.$inject = ["migrationServiceProvider"];
+_sqlStorageService.$inject = ["sqlStorageMigrationServiceProvider"];
 }());

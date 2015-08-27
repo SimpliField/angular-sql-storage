@@ -1,19 +1,19 @@
 angular
-  .module('sfMobile.storage')
-  .provider('migrationService', _migrationService);
+  .module('sf.sqlStorage')
+  .provider('sqlStorageMigrationService', _sqlStorageMigrationService);
 
-function _migrationService() {
+function _sqlStorageMigrationService() {
   var updateMethods = {};
 
   this.addUpdater = addUpdater;
-  this.$get = migrationService;
+  this.$get = sqlStorageMigrationService;
 
   function addUpdater(configMethod) {
     updateMethods[configMethod.version] = configMethod.method;
   }
 
   // @ngInject
-  function migrationService($q, $injector) {
+  function sqlStorageMigrationService($q, $injector) {
     var methods = {};
 
     methods._database = null;
