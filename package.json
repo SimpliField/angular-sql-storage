@@ -1,7 +1,7 @@
 {
   "name": "angular-sql-storage",
   "description": "Manage SQlLite connection and create tables",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "",
   "repository": {
     "type": "git",
