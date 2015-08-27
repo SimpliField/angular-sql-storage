@@ -31,6 +31,15 @@
         'angular-sql-storage.js': ['coverage'],
       },
 
+      coverageReporter: {
+        dir: 'coverage/',
+        reporters: [
+          // reporters not supporting the `file` property
+          { type: 'html', subdir: 'report-html' },
+          { type: 'lcov', subdir: 'report-lcov' },
+        ],
+      },
+
       // web server port
       port: 9876,
 
