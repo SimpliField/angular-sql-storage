@@ -1,8 +1,8 @@
 {
   "name": "angular-sql-storage",
   "description": "Manage SQlLite connection and create tables",
-  "version": "0.0.2",
-  "main": "",
+  "version": "0.0.3",
+  "main": "angular-sql-storage.js",
   "authors": [
     "Arnaud Spanneut <arnaud.spanneut@gmail.com>"
   ],
