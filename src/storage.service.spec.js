@@ -106,17 +106,23 @@
     //
     //---------------
     describe('Create', function() {
-      var localStub;
+      var localSetStub;
+      var localGetStub;
 
       beforeEach(inject(function(localStorageService) {
-        localStub = sinon.stub(localStorageService, 'set');
+        localSetStub = sinon.stub(localStorageService, 'set');
+        localGetStub = sinon.stub(localStorageService, 'get');
       }));
 
-      it('should create tables with migration', inject(function($q, $timeout, sqlStorageMigrationService) {
+      it('should create tables with migration', inject(
+      function($q, $timeout, sqlStorageMigrationService) {
         var data;
-        var updateStub = sinon.stub(sqlStorageMigrationService, 'updateManager').returns($q.when('ok'));
+        var updateStub = sinon.stub(sqlStorageMigrationService, 'updateManager').returns(
+          $q.when('ok')
+        );
 
         executeStub.returns($q.when('ok'));
+        localGetStub.returns(1);
 
         expect(sqlStorageService.createPromise).equal(null);
 
@@ -147,17 +153,16 @@
         $timeout.flush();
 
         expect(updateStub.callCount).equal(1);
-        expect(localStub.callCount).equal(1);
-        expect(localStub.args[0][0]).equal('database_version');
-        expect(localStub.args[0][1]).equal(databaseVersion);
+        expect(localSetStub.callCount).equal(1);
+        expect(localSetStub.args[0][0]).equal('database_version');
+        expect(localSetStub.args[0][1]).equal(databaseVersion);
         expect(data.test).equal('test');
       }));
 
-      it('should create tables without migration', inject(
-      function($q, $timeout, sqlStorageMigrationService, localStorageService) {
+      it('should create tables without migration', inject(function($q, $timeout) {
         var data = null;
 
-        sinon.stub(localStorageService, 'get').returns(1.1);
+        localGetStub.returns(1.1);
         executeStub.returns($q.when('ok'));
 
         sqlStorageService.initTables().then(function(_data_) {
@@ -166,7 +171,7 @@
 
         $timeout.flush();
 
-        expect(localStub.callCount).equal(0);
+        expect(localSetStub.callCount).equal(0);
         expect(data.test).equal('test');
       }));
     });
