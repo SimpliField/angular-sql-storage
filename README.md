@@ -41,9 +41,9 @@ When you're done, your setup should look similar to the following:
 ```
 ##Configuration
 ###setDatabaseConfig
-You could define your name and version of database<br/>
-Number of version let you manage migrations automatically.<br/>
-Service compare current version with the latest and run the upper updates than latest.<br/>
+You can define your name and database version number<br/>
+The version number let you manage migrations automatically.<br/>
+The service compares the current version with the latest and runs all updates accordingly<br/>
 **Default:** `name: database.db` `version: 1`
 ```js
 myApp.config(function (sqlStorageServiceProvider) {
@@ -55,9 +55,9 @@ myApp.config(function (sqlStorageServiceProvider) {
 });
 ```
 ###setDatabaseSchema
-You need to define table definition for create tables<br/>
+You need to define the table definition to create tables<br/>
 **Params:**
-- `defaultFields` [Array] - Define fields appear in all tables
+- `defaultFields` [Array] - Define fields which appear in all tables
   - `name` [String] - Sql field name
   - `type` [String] - Sql field type
   - `primayKey` [Boolean] - Add PRIMARY KEY constraint to field.
@@ -91,7 +91,7 @@ myApp.config(function (sqlStorageServiceProvider) {
 });
 ```
 ###setDatabaseInstance
-Set database instance instead of window.openDatabase.<br/>
+Set the database instance instead of window.openDatabase.<br/>
 Example, you can use cordova and [ngCordova](http://ngcordova.com/docs/plugins/sqlite/) to instantiate your database (Function is invoke by angular $injector.invoke service).
 ```js
 myApp.config(function (sqlStorageServiceProvider) {
@@ -108,7 +108,7 @@ You can access to this following instance variable :
 - `this._database`: Database Instance.
 
 **Params:**
-- `version` [Float] - Version that need to run script.
+- `version` [Float] - Version which need to run the script.
 - `method` [Function] - Method to run by $injector.inoke().
 ```js
 myApp.config(function (sqlStorageServiceProvider) {
@@ -140,7 +140,7 @@ Create Sql tables and run migration if needed<br/>
 **Returns:** `Database Instance`
 
 ###deleteDatas
-Drop all tables of database.
+Drop all tables (of the database).
 
 ###execute
 Helpers to execute sql queries.<br/>
