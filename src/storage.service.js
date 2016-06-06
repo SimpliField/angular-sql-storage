@@ -98,10 +98,10 @@
 
           $log.debug('[Storage] Create DB SUCCESS');
 
-          return (currentVersion < _databaseVersion) ?
+          return (currentVersion && currentVersion < _databaseVersion) ?
             sqlStorageMigrationService.updateManager(database, currentVersion)
               .then(saveDatabaseVersion) :
-            database;
+            saveDatabaseVersion();
 
           function saveDatabaseVersion() {
             localStorageService.set(DATABASE_VERSION_KEY, _databaseVersion);

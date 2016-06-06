@@ -188,7 +188,7 @@
 
         $timeout.flush();
 
-        expect(localSetStub.callCount).equal(0);
+        expect(localSetStub.callCount).equal(1);
         expect(data.test).equal('test');
       }));
     });
