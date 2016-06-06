@@ -1,201 +1,222 @@
-angular
-  .module('sf.sqlStorage')
-  .provider('sqlStorageService', _sqlStorageService);
+(function iife() {
+  'use strict';
 
-// @ngInject
-function _sqlStorageService(sqlStorageMigrationServiceProvider) {
-  var _databaseName = 'database.db';
-  var _databaseVersion = 1;
-  var _databaseSchema = null;
-  var _databaseInstance = null;
+  var DATABASE_VERSION_KEY = 'database_version';
 
-  this.$get = sqlStorageService;
-
-  this.setDatabaseConfig = setDatabaseConfig;
-  this.setDatabaseSchema = setDatabaseSchema;
-  this.setDatabaseInstance = setDatabaseInstance;
-  this.addUpdater = addUpdater;
-
-  function setDatabaseConfig(config) {
-    _databaseName = config.name;
-    _databaseVersion = config.version;
-  }
-  function setDatabaseSchema(databaseSchema) {
-    _databaseSchema = databaseSchema;
-  }
-  function setDatabaseInstance(databaseInstance) {
-    _databaseInstance = databaseInstance;
-  }
-  function addUpdater(configMethod) {
-    sqlStorageMigrationServiceProvider.addUpdater(configMethod);
-  }
+  angular
+    .module('sf.sqlStorage')
+    .provider('sqlStorageService', _sqlStorageService);
 
   // @ngInject
-  function sqlStorageService($q, $window, $log, $injector,
-  localStorageService, sqlStorageMigrationService) {
-    var methods = {};
-    var sqlInstance = null;
+  function _sqlStorageService(sqlStorageMigrationServiceProvider) {
+    var _databaseName = 'database.db';
+    var _databaseVersion = 1;
+    var _databaseSchema = null;
+    var _databaseInstance = null;
 
-    if(!_databaseSchema) {
-      $log.error('Please set a database configuration');
-      _databaseSchema = {};
+    this.$get = sqlStorageService;
+
+    this.setDatabaseConfig = setDatabaseConfig;
+    this.setDatabaseSchema = setDatabaseSchema;
+    this.setDatabaseInstance = setDatabaseInstance;
+    this.addUpdater = addUpdater;
+
+    function setDatabaseConfig(config) {
+      _databaseName = config.name;
+      _databaseVersion = config.version;
+    }
+    function setDatabaseSchema(databaseSchema) {
+      _databaseSchema = databaseSchema;
+    }
+    function setDatabaseInstance(databaseInstance) {
+      _databaseInstance = databaseInstance;
+    }
+    function addUpdater(configMethod) {
+      sqlStorageMigrationServiceProvider.addUpdater(configMethod);
     }
 
-    methods.createPromise = null;
+    // @ngInject
+    function sqlStorageService($q, $window, $log, $injector,
+    localStorageService, sqlStorageMigrationService) {
+      var methods = {};
+      var sqlInstance = null;
 
-    methods.tables = _databaseSchema.tables || {};
+      if(!_databaseSchema) {
+        $log.error('Please set a database configuration');
+        _databaseSchema = {};
+      }
 
-    // Methods
-    methods.initDatabase = initDatabase;
-    methods.getDatabase = getDatabase;
-    methods.initTables = initTables;
-    methods.deleteDatas = deleteDatas;
-    methods.execute = execute;
+      methods.createPromise = null;
 
-    /**
-     * Init database
-     * @return {Object} SQLite instance
-     */
-    function initDatabase() {
-      sqlInstance = (_databaseInstance) ?
-        $injector.invoke(_databaseInstance) :
-        $window.openDatabase(_databaseName, '1.0', 'database', 200000);
+      methods.tables = _databaseSchema.tables || {};
 
-      return sqlInstance;
-    }
+      // Methods
+      methods.initDatabase = initDatabase;
+      methods.getDatabase = getDatabase;
+      methods.initTables = initTables;
+      methods.deleteDatas = deleteDatas;
+      methods.createTables = createTables;
+      methods.execute = execute;
 
-    /**
-     * Get database instace
-     * @return {Object} SQLite instance
-     */
-    function getDatabase() {
-      return (!sqlInstance) ? this.initDatabase() : sqlInstance;
-    }
-    /**
-     * Create tables
-     * @return {Object} SQLite instance
-     */
-    function initTables() {
-      var _this = this;
-      var fields = (_databaseSchema.defaultFields || []).map(fieldConstruction);
-      var tables = this.tables;
-      var database;
-      var queries;
+      /**
+       * Init database
+       * @return {Object} SQLite instance
+       */
+      function initDatabase() {
+        sqlInstance = (_databaseInstance) ?
+          $injector.invoke(_databaseInstance) :
+          $window.openDatabase(_databaseName, '1.0', 'database', 200000);
 
-      if(this.createPromise) { return this.createPromise; }
+        return sqlInstance;
+      }
 
-      database = this.getDatabase();
-      queries = Object.keys(tables).map(function(tableKey) {
-        var query = constructCreateQuery(tables[tableKey], fields);
+      /**
+       * Get database instace
+       * @return {Object} SQLite instance
+       */
+      function getDatabase() {
+        return (!sqlInstance) ? this.initDatabase() : sqlInstance;
+      }
+      /**
+       * Create tables
+       * @return {Object} SQLite instance
+       */
+      function initTables() {
+        var _this = this;
+        var tables = this.tables;
 
-        return _this.execute(query);
-      });
+        if(this.createPromise) { return this.createPromise; }
 
-      this.createPromise = $q.all(queries).then(function createPromise() {
-        var currentVersion = localStorageService.get('database_version') || 0;
+        this.createPromise = this.createTables(_databaseSchema.defaultFields, tables)
+          .then(createSucceed);
 
-        $log.debug('[Storage] Create DB SUCCESS');
+        return this.createPromise;
 
-        return (currentVersion && currentVersion < _databaseVersion) ?
-          sqlStorageMigrationService.updateManager(database, currentVersion)
-            .then(function() {
-              localStorageService.set('database_version', _databaseVersion);
-              return database;
-            }) :
+        function createSucceed() {
+          var database = _this.getDatabase();
+          var currentVersion = localStorageService.get(DATABASE_VERSION_KEY) || 0;
+
+          $log.debug('[Storage] Create DB SUCCESS');
+
+          return (currentVersion && currentVersion < _databaseVersion) ?
+            sqlStorageMigrationService.updateManager(database, currentVersion)
+              .then(saveDatabaseVersion) :
             database;
-      });
 
-      return this.createPromise;
-    }
+          function saveDatabaseVersion() {
+            localStorageService.set(DATABASE_VERSION_KEY, _databaseVersion);
+            return database;
+          }
+        }
+      }
 
-    /**
-     * Clear All datas
-     * @return {Object} promise of db clear
-     */
-    function deleteDatas() {
-      var _this = this;
-      var tablesName = Object.keys(this.tables).map(function(tableKey) {
-        return _this.tables[tableKey].table_name;
-      });
+      /**
+       * Create table
+       * @param  {Array}  defaultFields - Fields for all tables
+       * @param  {Object} tables        - Tables definition
+       * @return {Promise} Tables create
+       */
+      function createTables(defaultFields, tables) {
+        var _this = this;
+        var fields = (defaultFields || []).map(fieldConstruction);
+        var queries = Object.keys(tables).map(function(tableKey) {
+          var query = constructCreateQuery(tables[tableKey], fields);
 
-      // Databases
-      var queries = tablesName.map(function(tableName) {
-        var request = 'DROP TABLE IF EXISTS ' + tableName;
-
-        return _this.execute(request);
-      });
-
-      // Local Storage
-      localStorageService.clearAll();
-
-      return $q.all(queries).then(function(data) {
-        _this.createPromise = null;
-        $log.debug('[Storage] Drop DB SUCCESS');
-        return data;
-      });
-    }
-
-
-    //---------------
-    //
-    //    HELPERS
-    //
-    //---------------
-    /**
-     * Make sqlLite request
-     *
-     * @param  {String} query     - SQL Query
-     * @param  {[Array]} binding  - Datas for querying
-     * @return {Promise}          - Request result
-     */
-    function execute(query, binding) {
-      var q = $q.defer();
-      var database = this.getDatabase();
-
-      database.transaction(function(tx) {
-        tx.executeSql(query, binding, function(sqlTx, result) {
-          q.resolve(result);
-        }, function(transaction, error) {
-          q.reject(error);
+          return _this.execute(query);
         });
-      });
-      return q.promise;
+
+        return $q.all(queries);
+      }
+
+      /**
+       * Clear All datas
+       * @return {Object} promise of db clear
+       */
+      function deleteDatas() {
+        var _this = this;
+        var tablesName = Object.keys(this.tables).map(function(tableKey) {
+          return _this.tables[tableKey].table_name;
+        });
+
+        // Databases
+        var queries = tablesName.map(function(tableName) {
+          var request = 'DROP TABLE IF EXISTS ' + tableName;
+
+          return _this.execute(request);
+        });
+
+        // Local Storage
+        localStorageService.clearAll();
+
+        return $q.all(queries).then(function(data) {
+          _this.createPromise = null;
+          $log.debug('[Storage] Drop DB SUCCESS');
+          return data;
+        });
+      }
+
+
+      //---------------
+      //
+      //    HELPERS
+      //
+      //---------------
+      /**
+       * Make sqlLite request
+       *
+       * @param  {String} query     - SQL Query
+       * @param  {[Array]} binding  - Datas for querying
+       * @return {Promise}          - Request result
+       */
+      function execute(query, binding) {
+        var q = $q.defer();
+        var database = this.getDatabase();
+
+        database.transaction(function(tx) {
+          tx.executeSql(query, binding, function(sqlTx, result) {
+            q.resolve(result);
+          }, function(transaction, error) {
+            q.reject(error);
+          });
+        });
+        return q.promise;
+      }
+
+      /**
+       * Construct the create table query.
+       *
+       * @param  {Object} table - Table definition
+       * @param  {Array} fields - Default fields
+       * @return {String}       - Create request
+       */
+      function constructCreateQuery(table, fields) {
+        var indexedFields = table.indexed_fields || [];
+        var tableFields = fields.concat(indexedFields.map(fieldConstruction));
+
+        // var fields
+        return [
+          'CREATE TABLE IF NOT EXISTS',
+          table.table_name,
+          '(' + tableFields.join(', ') + ')',
+        ].join(' ');
+      }
+
+      /**
+       * Create the definition of the field
+       *
+       * @param  {Object} field - Field configuration
+       * @return {String}       - Field definition
+       */
+      function fieldConstruction(field) {
+        var fieldDefinition = [field.name, field.type];
+
+        if(field.unique) { fieldDefinition.push('UNIQUE'); }
+        if(field.primayKey) { fieldDefinition.push('PRIMARY KEY'); }
+
+        return fieldDefinition.join(' ');
+      }
+
+      return methods;
     }
-
-    /**
-     * Construct the create table query.
-     *
-     * @param  {Object} table - Table definition
-     * @param  {Array} fields - Default fields
-     * @return {String}       - Create request
-     */
-    function constructCreateQuery(table, fields) {
-      var indexedFields = table.indexed_fields || [];
-      var tableFields = fields.concat(indexedFields.map(fieldConstruction));
-
-      // var fields
-      return [
-        'CREATE TABLE IF NOT EXISTS',
-        table.table_name,
-        '(' + tableFields.join(', ') + ')',
-      ].join(' ');
-    }
-
-    /**
-     * Create the definition of the field
-     *
-     * @param  {Object} field - Field configuration
-     * @return {String}       - Field definition
-     */
-    function fieldConstruction(field) {
-      var fieldDefinition = [field.name, field.type];
-
-      if(field.unique) { fieldDefinition.push('UNIQUE'); }
-      if(field.primayKey) { fieldDefinition.push('PRIMARY KEY'); }
-
-      return fieldDefinition.join(' ');
-    }
-
-    return methods;
   }
-}
+}());
