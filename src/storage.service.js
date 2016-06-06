@@ -98,7 +98,7 @@
 
           $log.debug('[Storage] Create DB SUCCESS');
 
-          return (currentVersion && currentVersion < _databaseVersion) ?
+          return (currentVersion < _databaseVersion) ?
             sqlStorageMigrationService.updateManager(database, currentVersion)
               .then(saveDatabaseVersion) :
             database;
