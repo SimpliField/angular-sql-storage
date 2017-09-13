@@ -63,7 +63,7 @@
       // - PhantomJS
       // - ChromeCanary
       // - Chrome
-      browsers: ['PhantomJS'],
+      browsers: ['ChromeHeadless'],
 
       // Continuous Integration mode
       // if true, Karma captures browsers, runs the tests and exits
