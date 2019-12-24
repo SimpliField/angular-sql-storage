@@ -14,6 +14,10 @@
         method: function() {},
       });
       sqlStorageServiceProvider.addUpdater({
+        version: 2.0,
+        method: function() {},
+      });
+      sqlStorageServiceProvider.addUpdater({
         version: 1.1,
         method: function() {},
       });
@@ -33,6 +37,15 @@
 
         expect(version10.callCount).equal(0);
         expect(version11.callCount).equal(1);
+      }));
+      it('should update available updaters in the right order', inject(function() {
+        var version10 = sinon.stub(sqlStorageMigrationService._updateMethods, '1');
+        var version2 = sinon.stub(sqlStorageMigrationService._updateMethods, '2');
+
+        sqlStorageMigrationService.updateManager(database, 1.0);
+
+        expect(version10.callCount).equal(0);
+        expect(version2.callCount).equal(1);
       }));
     });
 

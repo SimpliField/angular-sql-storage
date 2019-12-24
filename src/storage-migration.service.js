@@ -21,17 +21,18 @@ function _sqlStorageMigrationService() {
     methods.updateManager = updateManager;
 
     function updateManager(database, currentVersion) {
-      var updates;
-
       methods._database = database;
-      updates = Object.keys(methods._updateMethods).reduce(function(datas, updateKey) {
-        updateKey = parseFloat(updateKey);
-        if(updateKey > currentVersion) {
-          datas.push(callMethod(updateKey));
-        }
 
-        return datas;
-      }, []);
+      var updates = Object.keys(methods._updateMethods)
+        .sort()
+        .reduce(function(datas, updaterVersion) {
+          updaterVersion = parseFloat(updaterVersion);
+          if(updaterVersion > currentVersion) {
+            datas.push(callMethod(updaterVersion));
+          }
+
+          return datas;
+        }, []);
 
       return $q.all(updates);
     }
