@@ -13,7 +13,7 @@ function _sqlStorageMigrationService() {
   }
 
   // @ngInject
-  function sqlStorageMigrationService($q, $injector) {
+  function sqlStorageMigrationService($q, $injector, localStorageService) {
     var methods = {};
 
     methods._database = null;
@@ -23,18 +23,26 @@ function _sqlStorageMigrationService() {
     function updateManager(database, currentVersion) {
       methods._database = database;
 
-      var updates = Object.keys(methods._updateMethods)
-        .sort()
-        .reduce(function(datas, updaterVersion) {
-          updaterVersion = parseFloat(updaterVersion);
+      var DATABASE_VERSION_KEY = 'database_version';
+      var versions = Object.keys(methods._updateMethods)
+        .map(parseFloat)
+        .sort(function (a, b) { return a - b; })
+        .reduce(function (datas, updaterVersion) {
           if(updaterVersion > currentVersion) {
-            datas.push(callMethod(updaterVersion));
+            datas.push(updaterVersion);
           }
 
           return datas;
         }, []);
 
-      return $q.all(updates);
+      return versions.reduce(function(p, version) {
+        return p.then(function() {
+          return callMethod(version)
+            .then(function() {
+              return localStorageService.set(DATABASE_VERSION_KEY, version);
+            });
+        });
+      }, $q.when());
     }
 
     function callMethod(updateKey) {

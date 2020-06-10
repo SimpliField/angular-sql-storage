@@ -34,7 +34,7 @@ function _sqlStorageService(sqlStorageMigrationServiceProvider) {
 
   // @ngInject
   function sqlStorageService($q, $window, $log, $injector,
-  localStorageService, sqlStorageMigrationService) {
+    localStorageService, sqlStorageMigrationService) {
     var methods = {};
     var sqlInstance = null;
 
@@ -97,7 +97,10 @@ function _sqlStorageService(sqlStorageMigrationServiceProvider) {
 
         return (currentVersion && currentVersion < _databaseVersion) ?
           sqlStorageMigrationService.updateManager(database, currentVersion)
-            .then(saveDatabaseVersion) :
+            .catch(function (err) {
+              $log.error(err);
+              throw err;
+            }) :
           saveDatabaseVersion();
 
         function saveDatabaseVersion() {
