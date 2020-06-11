@@ -132,49 +132,45 @@
       }));
 
       it('should create tables with migration', inject(
-      function($q, $timeout, sqlStorageMigrationService) {
-        var data;
-        var updateStub = sinon.stub(sqlStorageMigrationService, 'updateManager').returns(
-          $q.when('ok')
-        );
+        function($q, $timeout, sqlStorageMigrationService) {
+          var data;
+          var updateStub = sinon.stub(sqlStorageMigrationService, 'updateManager').returns(
+            $q.when('ok')
+          );
 
-        executeStub.returns($q.when('ok'));
-        localGetStub.returns(1);
+          executeStub.returns($q.when('ok'));
+          localGetStub.returns(1);
 
-        expect(sqlStorageService.createPromise).equal(null);
+          expect(sqlStorageService.createPromise).equal(null);
 
-        sqlStorageService.initTables().then(function(_data_) {
-          data = _data_;
-        });
+          sqlStorageService.initTables().then(function(_data_) {
+            data = _data_;
+          });
 
-        expect(sqlStorageService.createPromise).not.equal(null);
-        expect(executeStub.callCount).equal(5);
+          expect(sqlStorageService.createPromise).not.equal(null);
+          expect(executeStub.callCount).equal(5);
 
-        Object.keys(sqlStorageService.tables).forEach(function(table, index) {
-          var tableName = sqlStorageService.tables[table].table_name;
-          var queryRequest = 'CREATE TABLE IF NOT EXISTS';
-          var queryFielsRequest = 'id NVARCHAR(32) UNIQUE PRIMARY KEY, payload TEXT';
+          Object.keys(sqlStorageService.tables).forEach(function(table, index) {
+            var tableName = sqlStorageService.tables[table].table_name;
+            var queryRequest = 'CREATE TABLE IF NOT EXISTS';
+            var queryFielsRequest = 'id NVARCHAR(32) UNIQUE PRIMARY KEY, payload TEXT';
 
-          expect(executeStub.args[index][0]).contain(queryRequest);
-          expect(executeStub.args[index][0]).contain(tableName);
-          expect(executeStub.args[index][0]).contain(queryFielsRequest);
-          if('results' === tableName) {
-            expect(executeStub.args[index][0]).contain(', localStatus TEXT');
-          }
-        });
+            expect(executeStub.args[index][0]).contain(queryRequest);
+            expect(executeStub.args[index][0]).contain(tableName);
+            expect(executeStub.args[index][0]).contain(queryFielsRequest);
+            if('results' === tableName) {
+              expect(executeStub.args[index][0]).contain(', localStatus TEXT');
+            }
+          });
 
-        // Called only once.
-        sqlStorageService.initTables();
-        expect(executeStub.callCount).equal(5);
+          // Called only once.
+          sqlStorageService.initTables();
+          expect(executeStub.callCount).equal(5);
 
-        $timeout.flush();
+          $timeout.flush();
 
-        expect(updateStub.callCount).equal(1);
-        expect(localSetStub.callCount).equal(1);
-        expect(localSetStub.args[0][0]).equal('database_version');
-        expect(localSetStub.args[0][1]).equal(databaseVersion);
-        expect(data.test).equal('test');
-      }));
+          expect(updateStub.callCount).equal(1);
+        }));
 
       it('should create tables without migration', inject(function($q, $timeout) {
         var data = null;
