@@ -97,9 +97,10 @@ function _sqlStorageService(sqlStorageMigrationServiceProvider) {
 
         return (currentVersion && currentVersion < _databaseVersion) ?
           sqlStorageMigrationService.updateManager(database, currentVersion)
+            .then(function() { return database; })
             .catch(function (err) {
               $log.error(err);
-              throw err;
+              return database;
             }) :
           saveDatabaseVersion();
 
