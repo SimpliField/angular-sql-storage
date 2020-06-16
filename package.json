@@ -15,7 +15,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "angular": "1.5.3",
+    "angular": "1.7.9",
     "angular-local-storage": "0.7.1"
   },
   "devDependencies": {
