@@ -171,10 +171,10 @@ angular-mocks@1.5.3:
   resolved "https://registry.yarnpkg.com/angular-mocks/-/angular-mocks-1.5.3.tgz#b74addb5c3773c6bc656120e5ea5508b7eda3fc2"
   integrity sha1-t0rdtcN3PGvGVhIOXqVQi37aP8I=
 
-angular@1.5.3:
-  version "1.5.3"
-  resolved "https://registry.yarnpkg.com/angular/-/angular-1.5.3.tgz#37c2f198ae76c2d6f3717a4ecef1cddcb048af79"
-  integrity sha1-N8LxmK52wtbzcXpOzvHN3LBIr3k=
+angular@1.8.3:
+  version "1.8.3"
+  resolved "https://registry.yarnpkg.com/angular/-/angular-1.8.3.tgz#851ad75d5163c105a7e329555ef70c90aa706894"
+  integrity sha512-5qjkWIQQVsHj4Sb5TcEs4WZWpFeVFHXwxEBHUhrny41D8UrBAd6T/6nPPAsLngJCReIOqi95W3mxdveveutpZw==
 
 ansi-colors@3.2.3:
   version "3.2.3"
